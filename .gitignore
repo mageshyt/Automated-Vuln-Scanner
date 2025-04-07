@@ -171,3 +171,4 @@ config.ini
 credentials.json
 
 /reports/*
+.DS_Store
