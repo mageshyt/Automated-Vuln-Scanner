@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerability Scan Report - {{ report_data.target }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .severity-high {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .severity-medium {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .severity-low {
+            color: #3498db;
+            font-weight: bold;
+        }
+        .severity-info {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .details {
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-left: 5px solid #2c3e50;
+            margin: 10px 0;
+        }
+        code {
+            background-color: #f8f8f8;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .summary-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+            padding: 20px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .count {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .label {
+            font-size: 1em;
+            color: #7f8c8d;
+        }
+        .header-title {
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="header-title">Vulnerability Scan Report</h1>
+        <p>Target: {{ report_data.target }}</p>
+        <p>Scan Date: {{ report_data.scan_date }}</p>
+    </div>
+    
+    <div class="section">
+        <h2>Executive Summary</h2>
+        <div class="summary-box">
+            <div class="summary-item">
+                <div class="count">{{ report_data.subdomains.subdomains|length if report_data.subdomains else 0 }}</div>
+                <div class="label">Subdomains</div>
+            </div>
+            <div class="summary-item">
+                <div class="count">{{ report_data.open_ports.open_ports|length if report_data.open_ports else 0 }}</div>
+                <div class="label">Open Ports</div>
+            </div>
+            <div class="summary-item">
+                <div class="count">{{ report_data.directories.directories|length if report_data.directories else 0 }}</div>
+                <div class="label">Directories</div>
+            </div>
+            <div class="summary-item">
+                <div class="count">{{ (report_data.sql_vulnerabilities.vulnerable_forms|length + report_data.sql_vulnerabilities.vulnerable_links|length) if report_data.sql_vulnerabilities else 0 }}</div>
+                <div class="label">SQL Injections</div>
+            </div>
+            <div class="summary-item">
+                <div class="count">{{ (report_data.xss_vulnerabilities.vulnerable_forms|length + report_data.xss_vulnerabilities.vulnerable_links|length) if report_data.xss_vulnerabilities else 0 }}</div>
+                <div class="label">XSS Vulnerabilities</div>
+            </div>
+        </div>
+        
+        <h3>Overall Risk Assessment</h3>
+        <p>
+            {% set total_high = ((report_data.sql_vulnerabilities.vulnerable_forms|length + report_data.sql_vulnerabilities.vulnerable_links|length) + (report_data.xss_vulnerabilities.vulnerable_forms|length + report_data.xss_vulnerabilities.vulnerable_links|length)) if (report_data.sql_vulnerabilities and report_data.xss_vulnerabilities) else 0 %}
+            {% if total_high > 5 %}
+                <span class="severity-high">High Risk</span>: The target has significant security vulnerabilities that should be addressed immediately.
+            {% elif total_high > 0 %}
+                <span class="severity-medium">Medium Risk</span>: The target has some security vulnerabilities that should be addressed.
+            {% else %}
+                <span class="severity-low">Low Risk</span>: The target appears to have minimal security vulnerabilities based on the scan.
+            {% endif %}
+        </p>
+    </div>
+    
+    {% if report_data.subdomains %}
+    <div class="section">
+        <h2>Subdomain Enumeration</h2>
+        <p>Found {{ report_data.subdomains.subdomains|length }} subdomains for {{ report_data.subdomains.domain }}.</p>
+        
+        {% if report_data.subdomains.dns_records %}
+        <h3>DNS Records</h3>
+        <table>
+            <tr>
+                <th>Record Type</th>
+                <th>Value</th>
+            </tr>
+            {% for record in report_data.subdomains.dns_records %}
+            <tr>
+                <td>{{ record.record_type }}</td>
+                <td>{{ record.value }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+        
+        {% if report_data.subdomains.subdomains %}
+        <h3>Discovered Subdomains</h3>
+        <table>
+            <tr>
+                <th>Subdomain</th>
+                <th>IP Address</th>
+            </tr>
+            {% for subdomain in report_data.subdomains.subdomains %}
+            <tr>
+                <td>{{ subdomain.subdomain }}</td>
+                <td>{{ subdomain.ip_address }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if report_data.open_ports %}
+    <div class="section">
+        <h2>Port Scanning</h2>
+        <p>Target Host: {{ report_data.open_ports.host }} ({{ report_data.open_ports.ip_address }})</p>
+        <p>Found {{ report_data.open_ports.open_ports|length }} open ports.</p>
+        
+        {% if report_data.open_ports.open_ports %}
+        <table>
+            <tr>
+                <th>Port</th>
+                <th>Service</th>
+                <th>Version</th>
+            </tr>
+            {% for port in report_data.open_ports.open_ports %}
+            <tr>
+                <td>{{ port.port }}</td>
+                <td>{{ port.service }}</td>
+                <td>{{ port.version }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if report_data.directories %}
+    <div class="section">
+        <h2>Directory Scanning</h2>
+        <p>Found {{ report_data.directories.directories|length }} directories/files on {{ report_data.directories.target }}.</p>
+        
+        {% if report_data.directories.directories %}
+        <table>
+            <tr>
+                <th>URL</th>
+                <th>Status Code</th>
+                <th>Size (bytes)</th>
+            </tr>
+            {% for directory in report_data.directories.directories %}
+            <tr>
+                <td>{{ directory.url }}</td>
+                <td>{{ directory.status_code }}</td>
+                <td>{{ directory.size }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% if report_data.sql_vulnerabilities %}
+    <div class="section">
+        <h2>SQL Injection Vulnerabilities</h2>
+        <p>Found {{ report_data.sql_vulnerabilities.total_vulnerabilities }} SQL Injection vulnerabilities on {{ report_data.sql_vulnerabilities.target }}.</p>
+        
+        {% if report_data.sql_vulnerabilities.vulnerable_forms %}
+        <h3>Vulnerable Forms</h3>
+        {% for vuln in report_data.sql_vulnerabilities.vulnerable_forms %}
+        <div class="details">
+            <p><strong>URL:</strong> {{ vuln.url }}</p>
+            <p><strong>Method:</strong> {{ vuln.method }}</p>
+            <p><strong>Vulnerable Inputs:</strong> {{ vuln.inputs|join(', ') }}</p>
+            <p><strong>Payload:</strong> <code>{{ vuln.payload }}</code></p>
+            <p><strong>Error Pattern:</strong> {{ vuln.error_pattern }}</p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        {% if report_data.sql_vulnerabilities.vulnerable_links %}
+        <h3>Vulnerable Links</h3>
+        {% for vuln in report_data.sql_vulnerabilities.vulnerable_links %}
+        <div class="details">
+            <p><strong>URL:</strong> {{ vuln.url }}</p>
+            <p><strong>Vulnerable Parameter:</strong> {{ vuln.parameter }}</p>
+            <p><strong>Payload:</strong> <code>{{ vuln.payload }}</code></p>
+            <p><strong>Error Pattern:</strong> {{ vuln.error_pattern }}</p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        <h3>Recommendations</h3>
+        <ul>
+            <li>Use prepared statements and parameterized queries</li>
+            <li>Apply input validation and sanitization</li>
+            <li>Use ORM frameworks that handle SQL escaping</li>
+            <li>Apply the principle of least privilege to database accounts</li>
+            <li>Use stored procedures when possible</li>
+            <li>Implement proper error handling that doesn't expose SQL details</li>
+        </ul>
+    </div>
+    {% endif %}
+    
+    {% if report_data.xss_vulnerabilities %}
+    <div class="section">
+        <h2>Cross-Site Scripting (XSS) Vulnerabilities</h2>
+        <p>Found {{ report_data.xss_vulnerabilities.total_vulnerabilities }} XSS vulnerabilities on {{ report_data.xss_vulnerabilities.target }}.</p>
+        
+        {% if report_data.xss_vulnerabilities.vulnerable_forms %}
+        <h3>Vulnerable Forms</h3>
+        {% for vuln in report_data.xss_vulnerabilities.vulnerable_forms %}
+        <div class="details">
+            <p><strong>URL:</strong> {{ vuln.url }}</p>
+            <p><strong>Method:</strong> {{ vuln.method }}</p>
+            <p><strong>Vulnerable Inputs:</strong> {{ vuln.inputs|join(', ') }}</p>
+            <p><strong>Payload:</strong> <code>{{ vuln.payload }}</code></p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        {% if report_data.xss_vulnerabilities.vulnerable_links %}
+        <h3>Vulnerable Links</h3>
+        {% for vuln in report_data.xss_vulnerabilities.vulnerable_links %}
+        <div class="details">
+            <p><strong>URL:</strong> {{ vuln.url }}</p>
+            <p><strong>Vulnerable Parameter:</strong> {{ vuln.parameter }}</p>
+            <p><strong>Payload:</strong> <code>{{ vuln.payload }}</code></p>
+        </div>
+        {% endfor %}
+        {% endif %}
+        
+        <h3>Recommendations</h3>
+        <ul>
+            <li>Encode output data using HTML entity encoding</li>
+            <li>Implement Content Security Policy (CSP) headers</li>
+            <li>Validate and sanitize all user inputs</li>
+            <li>Use framework-provided protection mechanisms</li>
+            <li>Apply context-specific output encoding</li>
+            <li>Use HTTPOnly and Secure flags for cookies</li>
+            <li>Consider using X-XSS-Protection header</li>
+        </ul>
+    </div>
+    {% endif %}
+    
+    <div class="section">
+        <h2>General Security Recommendations</h2>
+        <ul>
+            <li>Keep all software and frameworks up-to-date with security patches</li>
+            <li>Implement a proper Web Application Firewall (WAF)</li>
+            <li>Use HTTPS for all connections</li>
+            <li>Implement proper authentication and authorization</li>
+            <li>Apply the principle of least privilege</li>
+            <li>Perform regular security assessments and penetration testing</li>
+            <li>Develop and maintain a security incident response plan</li>
+            <li>Train developers on secure coding practices</li>
+            <li>Use strong password policies and consider multi-factor authentication</li>
+            <li>Regularly backup important data</li>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <p>This report was generated using Automated Vulnerability Scanner on {{ report_data.scan_date }}</p>
+    </div>
+</body>
+</html>
