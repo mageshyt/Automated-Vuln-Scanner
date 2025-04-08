@@ -50,6 +50,9 @@ def parse_arguments():
     parser.add_argument("-f", "--format", choices=["html", "pdf"], default="html", help="Report format (html or pdf)")
     parser.add_argument("-w", "--wordlist", help="Custom wordlist for directory scanning")
     parser.add_argument("-t", "--threads", type=int, default=10, help="Number of threads (default: 10)")
+    parser.add_argument("-b", "--browser", action="store_true", help="Use browser for form detection (for SQL/XSS scanning)")
+    parser.add_argument("--browser-type", choices=["safari", "brave", "firefox"], default="safari", 
+                        help="Browser to use for automation (safari, brave, or firefox)")
     
     return parser.parse_args()
 
@@ -102,12 +105,16 @@ def main():
     
     if args.all or args.sqli:
         print(f"\n{Fore.YELLOW}[*] Starting SQL Injection Scan...{Style.RESET_ALL}")
-        sqli_scanner = SQLInjectionScanner(target_url)
+        if args.browser:
+            print(f"{Fore.BLUE}[*] Using {args.browser_type.capitalize()} browser for form detection{Style.RESET_ALL}")
+        sqli_scanner = SQLInjectionScanner(target_url, use_browser=args.browser, browser_name=args.browser_type)
         report_data["sql_vulnerabilities"] = sqli_scanner.scan()
     
     if args.all or args.xss:
         print(f"\n{Fore.YELLOW}[*] Starting XSS Scan...{Style.RESET_ALL}")
-        xss_scanner = XSSScanner(target_url)
+        if args.browser:
+            print(f"{Fore.BLUE}[*] Using {args.browser_type.capitalize()} browser for form detection{Style.RESET_ALL}")
+        xss_scanner = XSSScanner(target_url, use_browser=args.browser, browser_name=args.browser_type)
         report_data["xss_vulnerabilities"] = xss_scanner.scan()
     
     # Generate report

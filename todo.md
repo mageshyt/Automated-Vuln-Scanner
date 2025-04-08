@@ -1,8 +1,8 @@
 # Features
 - [x] port scanner
-- [ ] subdomain scanner
-- [ ] sql injection scanner
-- [ ] xss scanner
+- [x] subdomain scanner
+- [x] sql injection scanner
+- [x] xss scanner
 - [ ] directory scanner
 - [ ] report generator
 - [ ] custom wordlist
@@ -11,9 +11,9 @@
 # Reviews
 - [ ] Review the code for best practices and optimizations.
 - [x] Review Port Scanner
-- [ ] Review Subdomain Scanner
-- [ ] Review SQL Injection Scanner
-- [ ] Review XSS Scanner
+- [x] Review Subdomain Scanner
+- [x] Review SQL Injection Scanner
+- [x] Review XSS Scanner
 - [ ] Review Directory Scanner
 - [ ] Review Report Generator
 - [ ] Review Wordlist Management
